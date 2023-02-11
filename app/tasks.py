@@ -1,5 +1,10 @@
 import asyncio
+from datetime import timedelta
+
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.constants import ACCESS_TOKEN_EXPIRE_MINUTES
 from app.db.dals.user_dal import UserDAL
 from app.models import Token, User, UserInDB
 from app.utils import create_access_token, get_password_hash, verify_password
@@ -14,6 +19,14 @@ async def signup_task(user: User, session: AsyncSession):
     # Add user to DB
     await add_to_user_db(db_user, session)
 
+
+async def login_task(form_data: OAuth2PasswordRequestForm):
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": form_data.username}, expires_delta=access_token_expires
+    )
+
+    return Token(access_token=access_token, token_type="bearer")
 
 
 async def verify_signup_task(user: User, session: AsyncSession):
