@@ -30,3 +30,9 @@ class UserDAL():
         email_list = email_entries.scalars().all()
         return user.email in email_list
 
+    async def get_user_hashed_password(self, username: str):
+        db_user_object = await self.db_session.execute(
+            select(User).where(User.username == username)
+        )
+        if db_user := db_user_object.scalar():
+            return db_user.hashed_password
