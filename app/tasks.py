@@ -44,3 +44,15 @@ async def add_to_user_db(user: UserInDB, session: AsyncSession):
         async with session.begin():
             user_dal = UserDAL(session)
             await user_dal.add_user(user)
+
+
+async def authenticate_user_task(session: AsyncSession, username: str, password: str):
+    async with session:
+        async with session.begin():
+            user_dal = UserDAL(session)
+            user_hashed_password = await user_dal.get_user_hashed_password(username)
+            if user_hashed_password:
+                return user_hashed_password if verify_password(password, user_hashed_password)\
+                    else False
+            else:
+                return False
