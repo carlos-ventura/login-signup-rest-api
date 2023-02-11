@@ -16,6 +16,16 @@ async def signup_task(user: User, session: AsyncSession):
 
 
 
+async def verify_signup_task(user: User, session: AsyncSession):
+    async with session:
+        async with session.begin():
+            user_dal = UserDAL(session)
+            existent_username = await user_dal.verify_username(user)
+            existent_email = await user_dal.verify_email(user)
+
+            return existent_username, existent_email
+
+
 async def add_to_user_db(user: UserInDB, session: AsyncSession):
     async with session:
         async with session.begin():
