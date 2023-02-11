@@ -1,8 +1,12 @@
 from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.config import Base, async_session, engine
-from app.tasks import verify_signup_task, signup_task
+from app.models import Token, User
+from app.tasks import (authenticate_user_task, login_task, signup_task,
+                       verify_signup_task)
+
 app = FastAPI()
 
 
@@ -37,6 +41,13 @@ async def signup(user: User, session: AsyncSession = Depends(get_session)):
     await signup_task(user, session)
 
 
-@app.post("/login")
-async def login():
-    return
+@app.post("/login", response_model=Token)
+async def login(form_data: OAuth2PasswordRequestForm = Depends(),
+                session: AsyncSession = Depends(get_session)):
+    authenticated = await authenticate_user_task(session, form_data.username, form_data.password)
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password.",
+        )
+    return await login_task(form_data)
