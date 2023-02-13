@@ -37,3 +37,54 @@ def user_payload(request):
     }
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("user_payload", [{"username": "user1"}], indirect=True)
+async def test_signup_success(user_payload):
+    async with AsyncClient(app=app, base_url="http://test") as async_client:
+        response = await async_client.post("/signup", json=user_payload)
+        assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("user_payload", [{"username": "user2"}], indirect=True)
+async def test_signup_failure_username_exists(user_payload):
+    async with AsyncClient(app=app, base_url="http://test") as async_client:
+        response = await async_client.post("/signup", json=user_payload)
+        assert response.status_code == 200
+        response = await async_client.post("/signup", json=user_payload)
+        assert response.status_code == 409
+        assert response.json() == {"detail": "Username already in use."}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("user_payload", [{"username": "user3"}], indirect=True)
+async def test_signup_failure_email_exists(user_payload):
+    async with AsyncClient(app=app, base_url="http://test") as async_client:
+        response = await async_client.post("/signup", json=user_payload)
+        user_payload["username"] = "new_user"
+        response = await async_client.post("/signup", json=user_payload)
+        assert response.status_code == 409
+        assert response.json() == {"detail": "Email already registered."}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("user_payload", [{"username": "user3"}], indirect=True)
+async def test_login_success(user_payload):
+    async with AsyncClient(app=app, base_url="http://test") as async_client:
+        response = await async_client.post("/signup", json=user_payload)
+        response = await async_client.post("/login",
+                                           data={"username": user_payload["username"],
+                                                 "password": user_payload["password"]})
+        assert response.status_code == 200
+        assert "access_token" in response.json()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("user_payload", [{"username": "user5"}], indirect=True)
+async def test_login_failure(user_payload):
+    async with AsyncClient(app=app, base_url="http://test") as async_client:
+        response = await async_client.post("/signup", json=user_payload)
+        response = await async_client.post(
+            "/login", data={"username": user_payload["username"], "password": "wrong_password"})
+        assert response.status_code == 401
+        assert response.json() == {"detail": "Incorrect username or password."}
