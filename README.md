@@ -23,6 +23,12 @@ uvicorn app.main:app --reload
 
 ![alt text](https://cdn.discordapp.com/attachments/583731026363416576/1073998731415916594/image.png)
 
+### Run test
+
+```
+pytest 
+```
+
 ## API documentation (provided by Swagger UI)
 
 ```
