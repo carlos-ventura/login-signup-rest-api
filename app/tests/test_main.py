@@ -26,3 +26,14 @@ asyncio.run(init_models())
 app.dependency_overrides[get_session] = override_get_session
 
 
+@pytest.fixture
+def user_payload(request):
+    username = request.param.get("username", "test-user")
+    return {
+        "username": username,
+        "fullname": f"{username} last",
+        "email": f"{username}@example.com",
+        "password": f"Pass{username}22#"
+    }
+
+
